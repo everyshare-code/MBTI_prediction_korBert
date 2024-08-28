@@ -25,29 +25,30 @@ class MBTIPredictor:
         return predicted_mbti, similarity_score
 
 # 예시 사용
-model = MBTI_korBert() # MBTI_korBert 인스턴스 생성
-predictor = MBTIPredictor(model)
-input_text = '''
-사람
-수
-유형
-이
-행동
-것
-사업가
-중
-가장
-때
-성격
-일
-등
-때문
-변화
-능력
-생각
-현실
-자신
-경우
-'''
-predicted_mbti, similarity_score = predictor.predict(input_text)
-print(f"Predicted MBTI: {predicted_mbti}, Similarity Score: {similarity_score}")
+if __name__ == "__main__":
+    model = MBTI_korBert() # MBTI_korBert 인스턴스 생성
+    predictor = MBTIPredictor(model)
+    input_text = '''
+    사람
+    수
+    유형
+    이
+    행동
+    것
+    사업가
+    중
+    가장
+    때
+    성격
+    일
+    등
+    때문
+    변화
+    능력
+    생각
+    현실
+    자신
+    경우
+    '''
+    predicted_mbti, similarity_score = predictor.predict(input_text)
+    print(f"Predicted MBTI: {predicted_mbti}, Similarity Score: {similarity_score}")
