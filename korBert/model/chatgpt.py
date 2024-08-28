@@ -8,7 +8,7 @@ class Assistant():
         self.api_key = os.getenv("OPENAI_API_KEY")
         self.client = OpenAI(api_key=self.api_key)
         self.thread_id = None
-        self.assistant_id = os.getenv("OPENAI_API_KEY")
+        self.assistant_id = os.getenv("ASSISTANT_ID")
 
 
     def send_message(self, prompt):
