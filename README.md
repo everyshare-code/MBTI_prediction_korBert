@@ -38,7 +38,7 @@
   ```
 
 ### MBTI 예측 (`model/mbti_prediction.py`)
-- 텍스트 파일에서 데이터를 읽고, 딕셔너리에 저장한 후, 데이터프레임으로 변환하여 CSV 파일로 저장합니다.
+- predict_mbti 함수는 입력된 텍스트를 기반으로 MBTI(Myers-Briggs Type Indicator) 성격 유형을 예측하는 역할을 합니다. 이 함수는 입력된 텍스트를 처리하고, 미리 학습된 BERT 모델을 통해 예측된 MBTI 유형과 그에 따른 확률을 반환합니다.
   ```python
     def predict_mbti(self, input_text):
       preprocess_input_text = preprocess_text(input_text)
