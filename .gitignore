@@ -1,0 +1,12 @@
+.csv
+.npy
+.env
+app.log
+.idea
+/korBert/model/config
+/venv
+__pycache__
+.ipynb_checkpoints
+
+
+
