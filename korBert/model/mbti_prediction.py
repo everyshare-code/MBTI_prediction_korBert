@@ -1,19 +1,15 @@
-import pandas as pd
 from korBert.preprocess.preprocessing import preprocess_text
 import joblib, torch, os
-from transformers import BertConfig, BertForSequenceClassification, BertModel
+from transformers import BertConfig, BertForSequenceClassification
 from korBert.preprocess.tokenization import BertTokenizer
 import numpy as np
+
 class MBTI_korBert():
     def __init__(self):
-        # 현재 파일의 절대 경로
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        # 프로젝트 루트 경로 계산
         project_root = os.path.dirname(current_dir)
-        # 프로젝트 루트를 기준으로 데이터셋 파일 경로 설정
         config_dir = os.path.join(project_root, 'model', 'config')
-        # 현재 파일의 절대 경로를 구함
-        # 절대 경로를 사용하여 파일 로드
+
         label_encoder_path = os.path.join(config_dir, 'label_encoder_01.pkl')
         self.label_encoder = joblib.load(label_encoder_path)
 
@@ -22,63 +18,58 @@ class MBTI_korBert():
         config.num_labels = len(self.label_encoder.classes_)
 
         vocab_file = os.path.join(config_dir, 'vocab.korean.rawtext.list')
-
         self.tokenizer = BertTokenizer(vocab_file=vocab_file, do_lower_case=False)
         self.device = torch.device("cpu")
-        model_path=os.path.join(config_dir, 'pytorch_model.bin')
-        self.model = BertForSequenceClassification.from_pretrained(model_path,
-                                                              config=config)
-        state_dict=os.path.join(config_dir, 'best_model_state_02.bin')
-        self.embedding_model=BertModel.from_pretrained(model_path, config=config)
-        self.model.load_state_dict(torch.load(state_dict, map_location=torch.device('cpu')))
+
+        model_path = os.path.join(config_dir, 'pytorch_model.bin')
+        # 모델을 from_pretrained로 로드
+        self.model = BertForSequenceClassification.from_pretrained(model_path, config=config)
+
+        # 최적의 state_dict 로드
+        # state_dict_path = os.path.join(config_dir, 'best_model_state_02.bin')
+        # state_dict = torch.load(state_dict_path, map_location=torch.device('cpu'))
+        #
+        # # 분류 레이어 가중치만 로드하지 않고, 나머지 가중치만 로드
+        # model_dict = self.model.state_dict()
+        # pretrained_dict = {k: v for k, v in state_dict.items() if 'classifier' not in k}
+        # model_dict.update(pretrained_dict)
+        #
+        # self.model.load_state_dict(model_dict)
+
+        self.model = BertForSequenceClassification.from_pretrained(model_path, config=config)
+        state_dict = os.path.join(config_dir, 'best_model_state_02.bin')
+        self.model.load_state_dict(torch.load(state_dict, map_location=torch.device('cpu')), strict=False)
         self.model.eval()
 
     def prepare_data_for_bert(self, input_text, max_len=512):
-        # 텍스트 전처리(소문자 변환 등) 및 토큰화
         tokens = self.tokenizer.tokenize(input_text)
-
-        # 토큰을 ID로 변환
         token_ids = self.tokenizer.convert_tokens_to_ids(tokens)
-
-        # 최대 길이로 패딩 및 어텐션 마스크 생성
         padding_length = max_len - len(token_ids)
         attention_mask = [1] * len(token_ids) + [0] * padding_length
-        token_ids += [0] * padding_length  # 패딩 적용
+        token_ids += [0] * padding_length
 
-        # 텐서로 변환
         input_ids = torch.tensor([token_ids])
         attention_masks = torch.tensor([attention_mask])
 
         return input_ids, attention_masks
 
-    def predict_mbti(self,input_text):
-        print(input_text)
-        preprocess_input_text=preprocess_text(input_text)
+    def predict_mbti(self, input_text):
+        preprocess_input_text = preprocess_text(input_text)
         input_ids, attention_masks = self.prepare_data_for_bert(preprocess_input_text)
         with torch.no_grad():
             outputs = self.model(input_ids.to(self.device), attention_mask=attention_masks.to(self.device))
             logits = outputs.logits
-            # 로짓을 확률로 변환
             probabilities = torch.softmax(logits, dim=1).detach().cpu().numpy()
-            # 가장 높은 확률을 가진 클래스의 인덱스를 추출
             predicted_label_idx = np.argmax(probabilities, axis=1)[0]
-            # 퍼센트로 변환
             probability_percent = probabilities[0][predicted_label_idx] * 100
-            # 예측된 mbti
             predicted_label = self.label_encoder.inverse_transform([predicted_label_idx])[0]
-            return {'mbti':predicted_label,'probabily':probability_percent}
+            return {'mbti': predicted_label, 'probability': probability_percent}
 
-    #코사인 유사도 계산을 위해 임베딩 처리를 위한 함수
     def get_embedding(self, text):
-        # 텍스트 전처리 및 입력 준비
         preprocessed_text = preprocess_text(text)
-
         input_ids, attention_masks = self.prepare_data_for_bert(preprocessed_text)
-
-        # 임베딩 추출
         with torch.no_grad():
-            outputs = self.embedding_model(input_ids, attention_mask=attention_masks)
-            # [CLS] 토큰의 임베딩 추출
+            outputs = self.model.bert(input_ids, attention_mask=attention_masks)
             cls_embedding = outputs.last_hidden_state[:, 0, :].detach().cpu().numpy()
             return cls_embedding
 
@@ -94,7 +85,6 @@ class MBTIKorBERTSingleTone:
 
 
 
-# model=MBTI_korBert()
 #
 # input_text='''
 # '사람',
