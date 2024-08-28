@@ -37,15 +37,20 @@
           # ... (이하 생략)
   ```
 
-### 데이터 저장 및 로드 (`model/mbti_prediction.py`)
+### MBTI 예측 (`model/mbti_prediction.py`)
 - 텍스트 파일에서 데이터를 읽고, 딕셔너리에 저장한 후, 데이터프레임으로 변환하여 CSV 파일로 저장합니다.
   ```python
-  # 파일 경로에서 파일명만 추출
-  file_name = os.path.basename(file_path)
-  key = file_name.split('_')[0]
-  with open(file_path, 'r', encoding='utf-8') as file:
-      lines = [line.strip() for line in file.readlines()]
-      result_dict[key] = lines
+    def predict_mbti(self, input_text):
+      preprocess_input_text = preprocess_text(input_text)
+      input_ids, attention_masks = self.prepare_data_for_bert(preprocess_input_text)
+      with torch.no_grad():
+          outputs = self.model(input_ids.to(self.device), attention_mask=attention_masks.to(self.device))
+          logits = outputs.logits
+          probabilities = torch.softmax(logits, dim=1).detach().cpu().numpy()
+          predicted_label_idx = np.argmax(probabilities, axis=1)[0]
+          probability_percent = probabilities[0][predicted_label_idx] * 100
+          predicted_label = self.label_encoder.inverse_transform([predicted_label_idx])[0]
+          return {'mbti': predicted_label, 'probability': probability_percent}
   ```
 
 ## 사용 방법
@@ -55,7 +60,8 @@
 
 ## 참고 사항
 - 이 프로젝트는 한국어 텍스트 데이터를 다루기 때문에, 한국어 전처리 및 토큰화에 특화된 라이브러리를 사용합니다.
-- BERT 모델의 사전 훈련된 가중치와 설정 파일은 `/content/drive/MyDrive/korBert/` 경로에 저장되어 있습니다.
+- [BERT 모델 링크](https://aiopen.etri.re.kr/bertModel)
+
 
 ## 라이선스
 이 프로젝트는 Apache 2.0 라이선스에 따라 배포됩니다. 자세한 내용은 LICENSE 파일을 참조하세요.
