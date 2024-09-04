@@ -46,8 +46,8 @@
 
 1. 리포지토리 클론:
    ```bash
-   git clone https://github.com/everyshare-code/mbti-api.git
-   cd mbti-api
+   git clone https://github.com/everyshare-code/MBTI_prediction_korBert.git
+   cd MBTI_prediction_korBert
    ```
 
 2. 필요한 패키지 설치:
